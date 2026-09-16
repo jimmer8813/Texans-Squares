@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texans Squares</title>
+<style>
+  :root{
+    --steel:#03202F;
+    --steel-2:#0A3049;
+    --red:#A71930;
+    --red-dim:#7C1224;
+    --cream:#F3EFE6;
+    --paper:#FFFFFF;
+    --gold:#C9A24B;
+    --line:#D8D2C4;
+    --ink:#1C1C1C;
+    --muted:#6B6459;
+    --win-glow: 0 0 0 3px var(--gold), 0 0 24px rgba(201,162,75,0.55);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 16px 60px;}
+  @media (max-width: 480px){
+    .wrap{padding:12px 6px 50px;}
+    header.top{padding:16px 14px;}
+  }
+
+  header.top{
+    background:var(--steel);
+    color:var(--cream);
+    padding:22px 20px;
+    border-radius:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  header.top .brand{display:flex;flex-direction:column;gap:2px;}
+  header.top h1{
+    margin:0;
+    font-family: 'Trebuchet MS', system-ui, sans-serif;
+    font-weight:800;
+    font-size:26px;
+    letter-spacing:0.5px;
+  }
+  header.top h1 span{color:var(--red);}
+  header.top .sub{
+    font-family: system-ui, sans-serif;
+    font-size:13px;
+    color:#C9C2B4;
+  }
+  #mgrBtn{
+    background:var(--red);
+    color:#fff;
+    border:none;
+    padding:9px 16px;
+    border-radius:6px;
+    font-family: system-ui, sans-serif;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #mgrBtn.active{background:var(--gold); color:var(--steel);}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    margin:18px 0 0;
+    border-bottom:2px solid var(--steel);
+  }
+  nav.tabs button{
+    font-family: system-ui, sans-serif;
+    background:transparent;
+    border:none;
+    padding:10px 18px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-2px;
+  }
+  nav.tabs button.active{
+    color:var(--steel);
+    border-bottom:2px solid var(--red);
+  }
+
+  .panel{display:none; padding-top:20px;}
+  .panel.active{display:block;}
+
+  .scorebar{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    align-items:stretch;
+    margin-bottom:16px;
+  }
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    flex:1;
+    min-width:140px;
+  }
+  .card .label{
+    font-family: system-ui, sans-serif;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .card .value{
+    font-size:22px;
+    font-weight:700;
+    font-family: 'Trebuchet MS', system-ui, sans-serif;
+  }
+  .card .value.small{font-size:15px; font-weight:600;}
+
+  .board-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    font-family: system-ui, sans-serif;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .board-meta .status{
+    font-size:13px;
+    padding:4px 10px;
+    border-radius:20px;
+    background:#EFE9DA;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .board-meta .status.open{background:#E4F0E3;color:#2F6B2A;}
+  .board-meta .status.locked{background:#F4E3E3;color:var(--red);}
+
+  .grid-outer{
+    display:grid;
+    grid-template-columns: 9% repeat(10, 1fr);
+    grid-auto-rows: 1fr;
+    gap:2px;
+    background:var(--steel);
+    padding:2px;
+    border-radius:8px;
+    width:100%;
+    aspect-ratio: 11 / 11;
+  }
+  .corner{
+    background:var(--steel);
+  }
+  .axis-label{
+    background:var(--steel);
+    color:var(--cream);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family: system-ui, sans-serif;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+  .colhead{
+    background:var(--red-dim);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:clamp(10px, 3vw, 18px);
+    font-family: 'Trebuchet MS', system-ui, sans-serif;
+  }
+  .rowhead{
+    background:var(--red-dim);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:clamp(10px, 3vw, 18px);
+    font-family: 'Trebuchet MS', system-ui, sans-serif;
+  }
+  .colhead.pending, .rowhead.pending{background:#5C3A40;}
+  .sq{
+    background:var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-family: system-ui, sans-serif;
+    font-size:clamp(6px, 1.7vw, 10.5px);
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    padding:1px;
+    line-height:1.1;
+    position:relative;
+    overflow:hidden;
+    word-break:break-word;
+  }
+  .sq.taken{background:#EDE7D8;}
+  .sq.mine{box-shadow: inset 0 0 0 3px #2D6CDF;}
+  .sq.winner-outline{
+    box-shadow: inset 0 0 0 2px var(--gold);
+    z-index:1;
+  }
+  .sq .win-dollar{
+    color: var(--gold);
+    font-weight:900;
+    -webkit-text-stroke: 0.3px var(--red-dim);
+  }
+  .sq.empty:hover{background:#F7F3E9;}
+  .sq .qtag{
+    position:absolute;
+    top:1px;
+    right:1px;
+    font-size:clamp(5px, 1.3vw, 8px);
+    background:var(--red);
+    color:#fff;
+    border-radius:3px;
+    padding:0 2px;
+    line-height:1.4;
+  }
+
+  .legend{
+    display:flex;
+    gap:16px;
+    font-family:system-ui, sans-serif;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;}
+
+  .winners-list{
+    margin-top:22px;
+  }
+  .winners-list h3{font-family:system-ui,sans-serif; font-size:15px; margin-bottom:8px;}
+  .win-row{
+    display:flex;
+    justify-content:space-between;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 14px;
+    margin-bottom:6px;
+    font-family:system-ui,sans-serif;
+    font-size:13px;
+  }
+  .win-row .amt{font-weight:700; color:var(--red);}
+
+  .rules-body{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:22px 24px;
+    max-width:640px;
+    line-height:1.6;
+    font-size:15px;
+  }
+  .rules-body h2{
+    font-family:'Trebuchet MS', system-ui, sans-serif;
+    color:var(--red-dim);
+    margin-top:0;
+  }
+  .rules-body textarea{
+    width:100%;
+    min-height:320px;
+    font-family:'Georgia',serif;
+    font-size:14px;
+    line-height:1.6;
+    padding:10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+  }
+
+  .mgr-panel{
+    background:var(--paper);
+    border:2px solid var(--gold);
+    border-radius:8px;
+    padding:16px 18px;
+    margin-bottom:18px;
+    font-family:system-ui,sans-serif;
+  }
+  .mgr-panel h3{margin:0 0 12px; font-size:14px; color:var(--steel);}
+  .mgr-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .mgr-row label{font-size:12px; color:var(--muted); min-width:110px;}
+  .mgr-row input, .mgr-row select{
+    font-family:system-ui,sans-serif;
+    padding:7px 9px;
+    border:1px solid var(--line);
+    border-radius:5px;
+    font-size:13px;
+  }
+  .mgr-row input[type=text], .mgr-row input[type=number]{width:110px;}
+  button.btn{
+    font-family:system-ui,sans-serif;
+    background:var(--steel);
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:5px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.btn.red{background:var(--red);}
+  button.btn.gold{background:var(--gold); color:var(--steel);}
+  button.btn:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(3,32,47,0.6);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:16px;
+  }
+  .modal{
+    background:var(--paper);
+    border-radius:10px;
+    padding:22px;
+    width:100%;
+    max-width:340px;
+    font-family:system-ui,sans-serif;
+  }
+  .modal h3{margin-top:0;}
+  .modal input{
+    width:100%;
+    padding:9px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:14px;
+    margin:10px 0;
+  }
+  .modal .row{display:flex; gap:8px; justify-content:flex-end;}
+
+  .banner{
+    position:fixed;
+    top:14px; left:50%; transform:translateX(-50%);
+    background:var(--gold);
+    color:var(--steel);
+    font-family:system-ui,sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:12px 20px;
+    border-radius:8px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    z-index:100;
+    max-width:90%;
+    text-align:center;
+  }
+  .foot-note{
+    font-family:system-ui,sans-serif;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:16px;
+    line-height:1.5;
+  }
+
+  .share-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:22px;
+    max-width:420px;
+    font-family:system-ui,sans-serif;
+    text-align:center;
+  }
+  .share-card .label{font-size:11px;color:var(--muted); letter-spacing:0.5px; margin-bottom:10px;}
+  #qrHolder{display:flex; justify-content:center; padding:10px 0 18px;}
+  #qrHolder img, #qrHolder canvas{border:8px solid #fff; border-radius:6px;}
+  .share-linkrow{display:flex; gap:8px;}
+  .share-linkrow input{
+    flex:1;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:12px;
+    font-family:system-ui,sans-serif;
+    color:var(--muted);
+    background:#FAF8F2;
+  }
+  .sq.unpaid{background:#FCD34D;}
+  .sq.paid{background:#86D99C;}
+  .pay-btn{
+    display:inline-block;
+    margin-top:14px;
+    background:var(--red);
+    color:#fff;
+    text-decoration:none;
+    padding:10px 18px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:14px;
+  }
+  .board-banner-top{
+    background:var(--steel);
+    color:#fff;
+    font-family:'Trebuchet MS', system-ui, sans-serif;
+    font-weight:800;
+    font-size:clamp(12px, 3vw, 18px);
+    letter-spacing:1px;
+    text-align:center;
+    padding:8px 6px;
+    border-radius:8px;
+    margin-bottom:4px;
+  }
+  .board-with-side{
+    display:flex;
+    gap:4px;
+    align-items:stretch;
+  }
+  .board-side-banner{
+    background:var(--steel);
+    color:#fff;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Trebuchet MS', system-ui, sans-serif;
+    font-weight:800;
+    font-size:clamp(11px, 2.8vw, 16px);
+    letter-spacing:1px;
+    padding:8px 5px;
+    border-radius:8px;
+    flex-shrink:0;
+  }
+  .board-with-side .grid-outer{ flex:1; min-width:0; }
+  .zelle-warning{
+    background:#FDECEC;
+    color:var(--red-dim);
+    border:1px solid var(--red);
+    border-radius:6px;
+    padding:10px 12px;
+    font-size:12.5px;
+    font-weight:600;
+    margin-bottom:12px;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <h1>Houston <span>Squares</span></h1>
+      <div class="sub" id="weekSub">Loading week info…</div>
+    </div>
+    <button id="mgrBtn">Manager Login</button>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="board" class="active">Board</button>
+    <button data-tab="winners">Winners</button>
+    <button data-tab="rules">Rules</button>
+    <button data-tab="share">Share</button>
+  </nav>
+
+  <!-- BOARD -->
+  <div class="panel active" id="panel-board">
+
+    <div id="mgrPanel" class="mgr-panel" style="display:none;">
+      <h3>Manager controls</h3>
+      <div id="zelleWarning"></div>
+      <div class="mgr-row">
+        <label>Opponent</label>
+        <input type="text" id="inOpponent" placeholder="e.g. Colts">
+        <label>Price / square</label>
+        <input type="number" id="inPrice" min="1" step="1">
+        <button class="btn" id="saveMetaBtn">Save</button>
+      </div>
+      <div class="mgr-row">
+        <label>Zelle contact</label>
+        <input type="text" id="inZelleContact" placeholder="(832) 655-8728 or email" style="width:220px;">
+        <button class="btn" id="saveZelleBtn">Save</button>
+      </div>
+      <div class="mgr-row">
+        <button class="btn gold" id="randomizeBtn">Randomize numbers &amp; start new week</button>
+        <button class="btn" id="lockBtn">Lock board</button>
+        <button class="btn red" id="clearBoardBtn">⚠️ Clear board</button>
+      </div>
+      <div class="mgr-row" style="border-top:1px solid var(--line); padding-top:10px; margin-top:4px;">
+        <label>Texans score</label>
+        <input type="number" id="inHome" min="0">
+        <label>Opponent score</label>
+        <input type="number" id="inAway" min="0">
+        <label>Quarter</label>
+        <select id="inQuarter">
+          <option value="Q1">1st Quarter</option>
+          <option value="Q2">2nd Quarter</option>
+          <option value="Half">Halftime</option>
+          <option value="Q3">3rd Quarter</option>
+          <option value="Q4">4th Quarter</option>
+          <option value="Final">Final</option>
+        </select>
+        <button class="btn" id="updateScoreBtn">Update score</button>
+      </div>
+      <div class="mgr-row">
+        <button class="btn red" id="lockWinnerBtn">Lock in winner for selected quarter</button>
+        <button class="btn" id="logoutBtn" style="margin-left:auto;">Log out</button>
+      </div>
+      <p style="font-size:11.5px;color:var(--muted); margin:8px 0 0;">You'll get an alert here within a few seconds of any new claim — but only while you have this tab open on a device (background browser tab is fine, fully closed is not). Keep it open on your phone during signups if you want to catch these live.</p>
+    </div>
+
+    <div class="scorebar">
+      <div class="card">
+        <div class="label">TEXANS</div>
+        <div class="value" id="homeScore">0</div>
+      </div>
+      <div class="card">
+        <div class="label" id="awayLabel">OPPONENT</div>
+        <div class="value" id="awayScore">0</div>
+      </div>
+      <div class="card">
+        <div class="label">QUARTER</div>
+        <div class="value small" id="quarterVal">Pre-game</div>
+      </div>
+      <div class="card">
+        <div class="label">PRICE / SQUARE</div>
+        <div class="value small" id="priceVal">$25</div>
+      </div>
+      <div class="card">
+        <div class="label">WINNER EACH QUARTER</div>
+        <div class="value small" id="potVal">$500</div>
+      </div>
+    </div>
+
+    <div class="board-meta">
+      <div id="boardStatus" class="status open">Open — claim your squares</div>
+      <div id="soldCount" style="font-family:system-ui,sans-serif; font-size:12px; color:var(--muted);">0 / 100 sold</div>
+    </div>
+
+    <div class="board-banner-top" id="opponentBanner">OPPONENT →</div>
+    <div class="board-with-side">
+      <div class="board-side-banner" id="texansBanner">TEXANS ▶</div>
+      <div class="grid-outer" id="gridOuter"></div>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--paper); border:1px solid var(--line);"></span>Open</span>
+      <span><span class="swatch" style="background:#FCD34D;"></span>Reserved, payment pending</span>
+      <span><span class="swatch" style="background:#86D99C;"></span>Payment confirmed</span>
+      <span><span class="swatch" style="background:#fff;border:2px solid var(--gold);"></span>Currently in the money ($ $)</span>
+      <span><span class="swatch" style="background:#fff;border:3px solid #2D6CDF;"></span>Squares you claimed (this device)</span>
+    </div>
+
+    <div class="foot-note">Rows = Texans score's last digit · Columns = opponent score's last digit. Numbers are hidden and shuffled fresh each week until the manager randomizes and locks the board. Unpaid squares are released automatically 2 hours after being reserved.</div>
+  </div>
+
+  <!-- WINNERS -->
+  <div class="panel" id="panel-winners">
+    <div class="winners-list">
+      <h3>This week's winners</h3>
+      <div id="winnersList"><p style="font-family:system-ui,sans-serif;color:var(--muted);font-size:13px;">No winners locked in yet.</p></div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div class="panel" id="panel-rules">
+    <div id="rulesView" class="rules-body"></div>
+    <div id="rulesEdit" class="mgr-panel" style="display:none; max-width:640px;">
+      <h3>Edit rules</h3>
+      <textarea id="rulesTextarea"></textarea>
+      <div class="mgr-row" style="margin-top:10px;">
+        <button class="btn" id="saveRulesBtn">Save rules</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="panel" id="panel-share">
+    <div class="share-card">
+      <div class="label">SCAN TO OPEN THE BOARD</div>
+      <div id="qrHolder"></div>
+      <div class="share-linkrow">
+        <input type="text" id="shareUrlDisplay" readonly>
+        <button class="btn" id="copyLinkBtn">Copy</button>
+      </div>
+    </div>
+    <div id="shareMgr" class="mgr-panel" style="display:none; max-width:420px; margin-top:16px;">
+      <h3>Set the shareable link</h3>
+      <div class="mgr-row">
+        <input type="text" id="inShareUrl" placeholder="https://..." style="flex:1; min-width:200px;">
+        <button class="btn" id="saveShareUrlBtn">Save</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted); margin:0;">Paste the public link people will use once you've shared or published this app — the file can't detect that URL on its own. Until you set one, the QR code points at whatever address is currently open.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="modalRoot"></div>
+<div id="bannerRoot"></div>
+
+<script>
+const DEFAULT_RULES = `How it works
+
+The board is 10 columns by 10 rows, 100 squares total. Each square costs $PRICE. Claim a square by tapping it and entering your name.
+
+Once every square is sold, or the manager decides it's time, the numbers 0 through 9 are randomly shuffled and assigned to the rows and columns. Nobody — including the manager — controls or knows the assignment ahead of time.
+
+Rows track the last digit of the Texans' score. Columns track the last digit of the opponent's score. At the end of the 1st, 2nd, 3rd, and 4th quarters, at halftime, and at the final score, whoever's square matches both last digits wins that round.
+
+Winners are announced in the app as soon as the manager locks in the score for that quarter. If your square wins, you'll see it highlighted and get a notification if you have the app open.
+
+Once you claim a square, you have 2 hours to send payment via Zelle before it's automatically released back to the pool for someone else to claim.
+
+Payouts and the exact split per quarter are set by the manager and announced before kickoff each week. Have fun and good luck.`;
+
+const PIN = "Jimmer881302"; // manager password — change this string before sharing if you want a different code
+
+function showFatalError(msg){
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#A71930;color:#fff;padding:14px 18px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;z-index:999;text-align:center;';
+  bar.textContent = msg;
+  document.body.appendChild(bar);
+  const grid = document.getElementById('gridOuter');
+  if(grid) grid.innerHTML = `<div style="grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#fff;font-family:system-ui,sans-serif;font-size:13px;text-align:center;padding:24px;">${msg}</div>`;
+}
+
+let db = null;
+if(typeof firebase === 'undefined'){
+  showFatalError('⚠️ The Firebase library failed to load (network issue or it was blocked). Check your connection and reload the page.');
+} else {
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZFChNE1jCg6Rg2jkzMReRohM0ZK0dmXQ",
+    authDomain: "texan-squares.firebaseapp.com",
+    databaseURL: "https://texan-squares-default-rtdb.firebaseio.com",
+    projectId: "texan-squares",
+    storageBucket: "texan-squares.firebasestorage.app",
+    messagingSenderId: "861226975279",
+    appId: "1:861226975279:web:6030fd0ba1c59d795a46da"
+  };
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }catch(e){
+    showFatalError('⚠️ Could not connect to the database: ' + e.message);
+  }
+}
+
+let isManager = false;
+let board = null;      // {opponent, price, numbers:{rows,cols}, claims:{}, locked, week, zelleContact, shareUrl}
+let scoreState = null; // {home, away, quarter}
+let winners = {};       // { Q1: {...}, Q2: {...}, Q3: {...}, Final: {...} } — keyed by quarter, not an array
+let rulesText = null;
+
+const HOLD_MS = 2 * 60 * 60 * 1000; // 2 hours to pay before an unpaid square is released
+
+function defaultBoard(){
+  return { opponent:'TBD', price:25, numbers:null, claims:{}, locked:false, week: new Date().toISOString().slice(0,10), zelleContact:'(832) 655-8728', shareUrl:'' };
+}
+
+// Realtime Database turns an object with purely sequential integer keys (0,1,2,...)
+// back into a JS array when read — our claims are keyed 0-99, so this WILL happen.
+// Normalize whatever comes back (array or object) into a plain {idx: claim} object.
+function normalizeClaims(raw){
+  const out = {};
+  if(!raw) return out;
+  if(Array.isArray(raw)){
+    raw.forEach((v,i)=>{ if(v!=null) out[i]=v; });
+  } else {
+    Object.keys(raw).forEach(k=>{ if(raw[k]!=null) out[k]=raw[k]; });
+  }
+  return out;
+}
+
+function normalizeBoard(b){
+  if(!b) return null;
+  if(b.zelleContact === undefined) b.zelleContact = '(832) 655-8728';
+  if(b.shareUrl === undefined) b.shareUrl = '';
+  b.claims = normalizeClaims(b.claims);
+  Object.keys(b.claims).forEach(k=>{
+    if(typeof b.claims[k] === 'string'){
+      b.claims[k] = { name: b.claims[k], paid: false };
+    }
+    if(b.claims[k].time === undefined){
+      b.claims[k].time = Date.now(); // legacy claim, start the clock fresh instead of expiring instantly
+    }
+  });
+  return b;
+}
+
+async function fbSet(path, value){
+  if(!db) return false;
+  try{ await db.ref(path).set(value); return true; }
+  catch(e){ console.error('firebase set failed', path, e); showBanner('⚠️ Could not save to the database — check your connection and try again.', 4000); return false; }
+}
+async function fbUpdate(path, obj){
+  if(!db) return false;
+  try{ await db.ref(path).update(obj); return true; }
+  catch(e){ console.error('firebase update failed', path, e); showBanner('⚠️ Could not save to the database — check your connection and try again.', 4000); return false; }
+}
+
+// Atomically reserve a square: Firebase re-runs this against the live server value
+// if it changed mid-flight, so exactly one caller can ever win an empty square —
+// this is what actually prevents two people from claiming the same square at once.
+async function reserveSquareAtomic(idx, name){
+  if(!db) return { committed:false, snapshot:{ val:()=>null } };
+  const result = await db.ref('board/claims/'+idx).transaction(current=>{
+    if(current) return; // already claimed — abort, don't touch it
+    return { name, paid:false, time: Date.now() };
+  });
+  return result; // result.committed === true means we won the square
+}
+
+async function togglePaidAtomic(idx){
+  if(!db) return;
+  await db.ref('board/claims/'+idx+'/paid').transaction(current=> !current);
+}
+
+async function releaseIfExpired(idx){
+  if(!db) return;
+  await db.ref('board/claims/'+idx).transaction(current=>{
+    if(current && !current.paid && current.time && (Date.now() - current.time > HOLD_MS)){
+      return null; // delete it
+    }
+    return; // no change, abort
+  });
+}
+
+function sweepExpiredClaims(){
+  if(!board || !board.claims) return;
+  Object.keys(board.claims).forEach(idx=>{
+    const c = board.claims[idx];
+    if(c && !c.paid && c.time && (Date.now() - c.time > HOLD_MS)){
+      releaseIfExpired(idx);
+    }
+  });
+}
+if(db) setInterval(sweepExpiredClaims, 15000);
+
+let knownClaimIds = null; // baseline of claim keys seen so far, for new-claim alerts
+function diffClaimsForAlerts(claims){
+  const currentIds = new Set(Object.keys(claims));
+  if(knownClaimIds !== null && isManager){
+    currentIds.forEach(id=>{
+      if(!knownClaimIds.has(id) && claims[id] && !claims[id].paid){
+        showBanner(`New claim: ${claims[id].name} reserved a square — verify payment.`, 5000);
+      }
+    });
+  }
+  knownClaimIds = currentIds;
+}
+
+const loaded = { board:false, score:false, winners:false, rules:false };
+let welcomeShown = false;
+function maybeRender(){
+  if(loaded.board && loaded.score && loaded.winners && loaded.rules){
+    render();
+    if(!welcomeShown){
+      welcomeShown = true;
+      showWelcomeModal();
+    }
+  }
+}
+
+function showWelcomeModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-bg">
+      <div class="modal" style="text-align:center;">
+        <h3>👆 Tap the square you'd like to buy</h3>
+        <p style="font-size:13px;color:var(--muted);">Pick any open (white) square on the board below. You'll enter your name, confirm, then get the Zelle info to pay.</p>
+        <div class="row" style="justify-content:center; margin-top:16px;">
+          <button class="btn red" id="modalCancel">Got it</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; };
+}
+
+function attachListeners(){
+  if(!db) return;
+  db.ref('board').on('value', snap=>{
+    let data = snap.val();
+    if(!data){
+      fbSet('board', defaultBoard()).then(ok=>{
+        if(!ok) showFatalError('⚠️ Connected to the database, but could not write the initial data. Check your Realtime Database rules allow writes.');
+      });
+      return;
+    }
+    board = normalizeBoard(data);
+    diffClaimsForAlerts(board.claims);
+    loaded.board = true;
+    maybeRender();
+  }, err=>{ showFatalError('⚠️ Database error (board): ' + err.message); });
+
+  db.ref('score').on('value', snap=>{
+    let data = snap.val();
+    if(!data){
+      fbSet('score', { home:0, away:0, quarter:'Pre-game' }).then(ok=>{
+        if(!ok) showFatalError('⚠️ Connected to the database, but could not write the initial score. Check your Realtime Database rules allow writes.');
+      });
+      return;
+    }
+    scoreState = data;
+    loaded.score = true;
+    maybeRender();
+  }, err=>{ showFatalError('⚠️ Database error (score): ' + err.message); });
+
+  db.ref('winners').on('value', snap=>{
+    winners = snap.val() || {};
+    loaded.winners = true;
+    maybeRender();
+  }, err=>{ showFatalError('⚠️ Database error (winners): ' + err.message); });
+
+  db.ref('rules').on('value', snap=>{
+    let data = snap.val();
+    if(data === null || data === undefined){
+      fbSet('rules', DEFAULT_RULES.replace('$PRICE', '$' + (board ? board.price : 25))).then(ok=>{
+        if(!ok) showFatalError('⚠️ Connected to the database, but could not write the initial rules. Check your Realtime Database rules allow writes.');
+      });
+      return;
+    }
+    rulesText = data;
+    loaded.rules = true;
+    maybeRender();
+  }, err=>{ showFatalError('⚠️ Database error (rules): ' + err.message); });
+
+  // Watchdog: if we're still waiting on something after 8 seconds, say so on-screen
+  // instead of leaving a silently blank board.
+  setTimeout(()=>{
+    if(!(loaded.board && loaded.score && loaded.winners && loaded.rules)){
+      const missing = Object.keys(loaded).filter(k=>!loaded[k]);
+      showFatalError('⚠️ Still waiting on the database after 8 seconds (missing: ' + missing.join(', ') + '). This usually means the connection is stuck or blocked.');
+    }
+  }, 8000);
+}
+
+function shuffledDigits(){
+  const a = [0,1,2,3,4,5,6,7,8,9];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function currentWinningIndex(){
+  if(!board.numbers) return -1;
+  const hDigit = scoreState.home % 10;
+  const aDigit = scoreState.away % 10;
+  const r = board.numbers.rows.indexOf(hDigit);
+  const c = board.numbers.cols.indexOf(aDigit);
+  if(r<0 || c<0) return -1;
+  return r*10 + c;
+}
+
+function setValueIfNotFocused(id, val){
+  const el = document.getElementById(id);
+  if(document.activeElement !== el) el.value = val;
+}
+
+function render(){
+  document.getElementById('weekSub').textContent =
+    `Texans vs ${board.opponent} · Week board reset ${board.week}`;
+  document.getElementById('awayLabel').textContent = board.opponent.toUpperCase();
+  document.getElementById('opponentBanner').textContent = board.opponent.toUpperCase() + ' →';
+  document.getElementById('homeScore').textContent = scoreState.home;
+  document.getElementById('awayScore').textContent = scoreState.away;
+  document.getElementById('quarterVal').textContent = scoreState.quarter;
+  document.getElementById('priceVal').textContent = '$' + board.price;
+
+  const soldCount = Object.keys(board.claims).length;
+  const paidCount = Object.values(board.claims).filter(c=>c.paid).length;
+  document.getElementById('soldCount').textContent = `${soldCount} / 100 sold · ${paidCount} paid`;
+
+  const statusEl = document.getElementById('boardStatus');
+  if(board.locked){
+    statusEl.textContent = 'Locked — numbers assigned, game on';
+    statusEl.className = 'status locked';
+  } else {
+    statusEl.textContent = 'Open — claim your squares';
+    statusEl.className = 'status open';
+  }
+
+  renderGrid();
+  renderWinners();
+  renderRules();
+  renderShare();
+
+  document.getElementById('mgrBtn').textContent = isManager ? 'Manager mode ✓' : 'Manager Login';
+  document.getElementById('mgrBtn').classList.toggle('active', isManager);
+  document.getElementById('mgrPanel').style.display = isManager ? 'block' : 'none';
+  if(isManager){
+    setValueIfNotFocused('inOpponent', board.opponent);
+    setValueIfNotFocused('inPrice', board.price);
+    setValueIfNotFocused('inHome', scoreState.home);
+    setValueIfNotFocused('inAway', scoreState.away);
+    setValueIfNotFocused('inZelleContact', board.zelleContact);
+    setValueIfNotFocused('inShareUrl', board.shareUrl);
+    const zelleWarningEl = document.getElementById('zelleWarning');
+    zelleWarningEl.innerHTML = (!board.zelleContact || !board.zelleContact.trim())
+      ? '<div class="zelle-warning">⚠️ No Zelle contact set — no one will be able to see how to pay you until you add one below.</div>'
+      : '';
+  }
+}
+
+function renderGrid(){
+  const outer = document.getElementById('gridOuter');
+  outer.innerHTML = '';
+
+  const corner = document.createElement('div');
+  corner.className = 'corner';
+  outer.appendChild(corner);
+
+  for(let c=0;c<10;c++){
+    const el = document.createElement('div');
+    const val = board.numbers ? board.numbers.cols[c] : '';
+    el.className = 'colhead' + (board.numbers ? '' : ' pending');
+    el.textContent = board.numbers ? val : '?';
+    outer.appendChild(el);
+  }
+
+  const winIdx = currentWinningIndex();
+  const myClaims = getMyClaims();
+  const mineSet = (myClaims.week === board.week) ? new Set(myClaims.indices) : new Set();
+
+  for(let r=0;r<10;r++){
+    const rh = document.createElement('div');
+    const val = board.numbers ? board.numbers.rows[r] : '';
+    rh.className = 'rowhead' + (board.numbers ? '' : ' pending');
+    rh.textContent = board.numbers ? val : '?';
+    outer.appendChild(rh);
+
+    for(let c=0;c<10;c++){
+      const idx = r*10+c;
+      const sq = document.createElement('div');
+      const claim = board.claims[idx];
+      if(claim){
+        sq.className = 'sq ' + (claim.paid ? 'paid' : 'unpaid');
+      } else {
+        sq.className = 'sq empty';
+      }
+      const isCurrentlyWinning = (idx === winIdx && !!board.numbers);
+      if(isCurrentlyWinning) sq.classList.add('winner-outline');
+      if(mineSet.has(idx)) sq.classList.add('mine');
+
+      if(claim && isCurrentlyWinning){
+        const dollarL = document.createElement('span');
+        dollarL.className = 'win-dollar';
+        dollarL.textContent = '$';
+        const dollarR = document.createElement('span');
+        dollarR.className = 'win-dollar';
+        dollarR.textContent = '$';
+        sq.appendChild(dollarL);
+        sq.appendChild(document.createTextNode(claim.name));
+        sq.appendChild(dollarR);
+      } else {
+        sq.textContent = claim ? claim.name : '';
+      }
+      sq.onclick = () => onSquareClick(idx);
+
+      const wonHere = Object.values(winners).filter(w=>w.index===idx);
+      if(wonHere.length){
+        const tag = document.createElement('div');
+        tag.className = 'qtag';
+        tag.textContent = wonHere.map(w=>w.quarter).join(',');
+        sq.appendChild(tag);
+      }
+      outer.appendChild(sq);
+    }
+  }
+}
+
+function renderWinners(){
+  const list = document.getElementById('winnersList');
+  const entries = Object.values(winners);
+  if(!entries.length){
+    list.innerHTML = '<p style="font-family:system-ui,sans-serif;color:var(--muted);font-size:13px;">No winners locked in yet.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  entries.sort((a,b)=> (b.time||0) - (a.time||0)).forEach(w=>{
+    const row = document.createElement('div');
+    row.className = 'win-row';
+    row.innerHTML = `<span><strong>${w.quarter}</strong> — ${w.name || 'Unclaimed square'} (row/col digits ${w.homeDigit}/${w.awayDigit})</span><span class="amt">$${w.amount}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function renderRules(){
+  const view = document.getElementById('rulesView');
+  view.innerHTML = '<h2>Rules</h2>' + rulesText.split('\n\n').map(p=>`<p>${escapeHtml(p)}</p>`).join('');
+  document.getElementById('rulesEdit').style.display = isManager ? 'block' : 'none';
+  if(isManager) document.getElementById('rulesTextarea').value = rulesText;
+}
+
+let qrInstance = null;
+function renderShare(){
+  const url = board.shareUrl && board.shareUrl.trim() ? board.shareUrl.trim() : window.location.href;
+  document.getElementById('shareUrlDisplay').value = url;
+  document.getElementById('shareMgr').style.display = isManager ? 'block' : 'none';
+
+  const holder = document.getElementById('qrHolder');
+  try{
+    if(typeof QRCode === 'undefined'){
+      holder.innerHTML = '<p style="font-size:12px;color:var(--muted);">QR code library did not load — share the link below instead.</p>';
+      return;
+    }
+    if(qrInstance && qrInstance._lastUrl === url) return; // avoid needless re-render
+    holder.innerHTML = '';
+    qrInstance = new QRCode(holder, {
+      text: url,
+      width: 180,
+      height: 180,
+      colorDark: '#03202F',
+      colorLight: '#ffffff'
+    });
+    qrInstance._lastUrl = url;
+  }catch(e){
+    holder.innerHTML = '<p style="font-size:12px;color:var(--muted);">Couldn\'t generate a QR code — share the link below instead.</p>';
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// "Remember my square" — per-device, per-week list of squares this browser
+// claimed, so returning visitors can spot their own squares at a glance.
+function getMyClaims(){
+  try{
+    const raw = localStorage.getItem('mySquares');
+    if(!raw) return { week: null, indices: [] };
+    const parsed = JSON.parse(raw);
+    return { week: parsed.week || null, indices: Array.isArray(parsed.indices) ? parsed.indices : [] };
+  }catch(e){ return { week: null, indices: [] }; }
+}
+function addMyClaim(idx){
+  try{
+    const data = getMyClaims();
+    if(data.week !== board.week){
+      data.week = board.week;
+      data.indices = [];
+    }
+    if(!data.indices.includes(idx)) data.indices.push(idx);
+    localStorage.setItem('mySquares', JSON.stringify(data));
+  }catch(e){ /* localStorage unavailable — just skip the personalization */ }
+}
+
+async function onSquareClick(idx){
+  const claim = board.claims[idx];
+
+  if(claim){
+    if(isManager){
+      const willBePaid = !claim.paid;
+      await togglePaidAtomic(idx);
+      showBanner(`${claim.name} marked ${willBePaid ? 'payment confirmed ✅' : 'unpaid'}.`, 1600);
+      return;
+    }
+    showPaymentInfo(claim);
+    return;
+  }
+
+  if(board.locked){
+    showBanner('The board is locked for this week — no new claims.', 2200);
+    return;
+  }
+  const name = await promptModal('Claim this square', `$${board.price} per square. Enter the name to show on the board:`);
+  if(!name || !name.trim()) return;
+  const cleanName = name.trim().slice(0,18);
+
+  const wantsIt = await confirmModal(
+    'Reserve this square?',
+    `Reserve this square under "${cleanName}" for $${board.price}? Once confirmed, it'll show up yellow on the board right away so no one else can grab it.`,
+    'Yes, I want this square',
+    "No, I don't want it"
+  );
+  if(!wantsIt) return; // declined — nothing written, square stays open for others
+
+  if(board.locked){
+    showBanner('The board just got locked — no new claims.', 2200);
+    return;
+  }
+  const result = await reserveSquareAtomic(idx, cleanName);
+  if(!result.committed){
+    showBanner(`Sorry — someone just grabbed that square first.`, 3000);
+    return;
+  }
+  addMyClaim(idx);
+  showPaymentInfo(result.snapshot.val());
+}
+
+function showPaymentInfo(claim){
+  if(claim.paid){
+    showConfirmedModal(claim);
+    return;
+  }
+  showPaymentStep1(claim);
+}
+
+function showConfirmedModal(claim){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-bg">
+      <div class="modal" style="text-align:center;">
+        <h3>${escapeHtml(claim.name)}'s square</h3>
+        <p style="font-size:13px;color:#2F6B2A;font-weight:600;">✅ Payment confirmed — this square is locked in.</p>
+        <div class="row" style="justify-content:center; margin-top:16px;">
+          <button class="btn" id="modalCancel" style="background:#999;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; };
+}
+
+function showPaymentStep1(claim){
+  const root = document.getElementById('modalRoot');
+  const hasZelle = board.zelleContact && board.zelleContact.trim();
+  const payBlock = hasZelle
+    ? `<p style="font-size:13px;font-weight:600;margin:12px 0 4px;">Send $${board.price} via Zelle to:</p>
+       <p style="font-size:16px;font-weight:700;color:var(--red-dim);margin:0 0 10px;">${escapeHtml(board.zelleContact)}</p>
+       <div id="payQrHolder" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
+       <button class="btn" id="copyZelleBtn" style="margin-bottom:14px;">Copy number</button>
+       <p style="font-size:12px;font-weight:600;margin:2px 0 3px;">For the payment note / "for" field, enter:</p>
+       <p style="font-size:14px;font-weight:700;color:var(--steel);margin:0 0 6px;">${escapeHtml(claim.name)}'s square</p>`
+    : `<p style="font-size:12px;color:var(--muted);">The manager hasn't set a Zelle contact yet — check the Rules tab or ask them directly.</p>`;
+
+  root.innerHTML = `
+    <div class="modal-bg">
+      <div class="modal" style="text-align:center;">
+        <h3>Pay for ${escapeHtml(claim.name)}'s square</h3>
+        ${payBlock}
+        <p style="font-size:12px;color:var(--red);font-weight:700;margin:10px 0 0;">⏱ Payment must arrive within 2 hours of reserving, or this square is released automatically for someone else to claim.</p>
+        <div class="row" style="justify-content:center; margin-top:16px;">
+          <button class="btn red" id="modalNext">Continue</button>
+        </div>
+      </div>
+    </div>`;
+
+  if(hasZelle){
+    try{
+      if(typeof QRCode !== 'undefined'){
+        new QRCode(document.getElementById('payQrHolder'), {
+          text: `Zelle: ${board.zelleContact}`,
+          width: 130,
+          height: 130,
+          colorDark: '#03202F',
+          colorLight: '#ffffff'
+        });
+      }
+    }catch(e){ /* QR optional, number is already shown as text */ }
+
+    document.getElementById('copyZelleBtn').onclick = async ()=>{
+      try{
+        await navigator.clipboard.writeText(board.zelleContact);
+        showBanner('Number copied.', 1400);
+      }catch(e){ showBanner('Could not copy — select the number manually.', 2000); }
+    };
+  }
+
+  document.getElementById('modalNext').onclick = ()=>{ showHoldStep2(claim); };
+}
+
+function showHoldStep2(claim){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-bg">
+      <div class="modal" style="text-align:center;">
+        <h3>${escapeHtml(claim.name)}'s square is reserved</h3>
+        <p style="font-size:13px;color:var(--muted);">🟡 Holding your spot on the board while payment is verified. It'll turn green as soon as the manager confirms your Zelle payment came through.</p>
+        <p style="font-size:12px;color:var(--red);font-weight:700;margin-top:10px;">⏱ If payment isn't received within 2 hours of reserving, this square is automatically released and anyone can claim it.</p>
+        <div class="row" style="justify-content:center; margin-top:16px;">
+          <button class="btn" id="modalCancel" style="background:#999;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; };
+}
+
+function promptModal(title, msg){
+  return new Promise(resolve=>{
+    const root = document.getElementById('modalRoot');
+    root.innerHTML = `
+      <div class="modal-bg">
+        <div class="modal">
+          <h3>${title}</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0;">${msg}</p>
+          <input type="text" id="modalInput" autofocus>
+          <div class="row">
+            <button class="btn" id="modalCancel" style="background:#999;">Cancel</button>
+            <button class="btn red" id="modalOk">Confirm</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('modalOk').onclick = ()=>{
+      const v = document.getElementById('modalInput').value;
+      root.innerHTML='';
+      resolve(v);
+    };
+    document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; resolve(null); };
+  });
+}
+
+function confirmModal(title, msg, yesLabel='Confirm', noLabel='Cancel'){
+  return new Promise(resolve=>{
+    const root = document.getElementById('modalRoot');
+    root.innerHTML = `
+      <div class="modal-bg">
+        <div class="modal">
+          <h3>${title}</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0;">${msg}</p>
+          <div class="row" style="margin-top:16px;">
+            <button class="btn" id="modalCancel" style="background:#999;">${noLabel}</button>
+            <button class="btn red" id="modalOk">${yesLabel}</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('modalOk').onclick = ()=>{ root.innerHTML=''; resolve(true); };
+    document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; resolve(false); };
+  });
+}
+
+function pinModal(){
+  return new Promise(resolve=>{
+    const root = document.getElementById('modalRoot');
+    root.innerHTML = `
+      <div class="modal-bg">
+        <div class="modal">
+          <h3>Manager login</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0;">Enter the manager password.</p>
+          <input type="password" id="modalInput" autofocus>
+          <div class="row">
+            <button class="btn" id="modalCancel" style="background:#999;">Cancel</button>
+            <button class="btn red" id="modalOk">Log in</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('modalOk').onclick = ()=>{
+      const v = document.getElementById('modalInput').value;
+      root.innerHTML='';
+      resolve(v);
+    };
+    document.getElementById('modalCancel').onclick = ()=>{ root.innerHTML=''; resolve(null); };
+  });
+}
+
+function showBanner(text, ms=3000){
+  const root = document.getElementById('bannerRoot');
+  const el = document.createElement('div');
+  el.className = 'banner';
+  el.textContent = text;
+  root.appendChild(el);
+  setTimeout(()=>el.remove(), ms);
+
+  try{
+    if('Notification' in window){
+      if(Notification.permission === 'granted'){
+        new Notification('Texans Squares', { body: text });
+      } else if(Notification.permission !== 'denied'){
+        Notification.requestPermission().catch(()=>{});
+      }
+    }
+  }catch(e){ /* notifications not available in this environment */ }
+}
+
+// ---- tabs ----
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  };
+});
+
+// ---- manager login ----
+document.getElementById('mgrBtn').onclick = async ()=>{
+  if(isManager){ isManager=false; render(); return; }
+  const entered = await pinModal();
+  if(entered === null) return;
+  if(entered === PIN){
+    isManager = true;
+    showBanner('Manager mode unlocked.', 1800);
+    render();
+  } else {
+    showBanner('Wrong password.', 1800);
+  }
+};
+document.getElementById('logoutBtn').onclick = ()=>{ isManager=false; render(); };
+
+document.getElementById('saveMetaBtn').onclick = async ()=>{
+  const oppInput = document.getElementById('inOpponent').value.trim();
+  const priceInput = parseFloat(document.getElementById('inPrice').value);
+  await fbUpdate('board', {
+    opponent: oppInput || board.opponent,
+    price: isNaN(priceInput) ? board.price : priceInput
+  });
+  showBanner('Saved.', 1500);
+};
+
+document.getElementById('saveZelleBtn').onclick = async ()=>{
+  const contact = document.getElementById('inZelleContact').value.trim();
+  await fbUpdate('board', { zelleContact: contact });
+  showBanner('Zelle contact saved.', 1500);
+};
+
+document.getElementById('saveShareUrlBtn').onclick = async ()=>{
+  const url = document.getElementById('inShareUrl').value.trim();
+  await fbUpdate('board', { shareUrl: url });
+  showBanner('Share link saved.', 1500);
+};
+
+document.getElementById('copyLinkBtn').onclick = async ()=>{
+  const val = document.getElementById('shareUrlDisplay').value;
+  try{
+    await navigator.clipboard.writeText(val);
+    showBanner('Link copied.', 1500);
+  }catch(e){
+    const el = document.getElementById('shareUrlDisplay');
+    el.select();
+    try{ document.execCommand('copy'); showBanner('Link copied.', 1500); }
+    catch(e2){ showBanner('Could not copy — select and copy manually.', 2200); }
+  }
+};
+
+document.getElementById('randomizeBtn').onclick = async ()=>{
+  const ok = await confirmModal('Start a new week?', 'This clears all claims, reshuffles numbers, and unlocks the board. Continue?');
+  if(!ok) return;
+  await fbUpdate('board', {
+    numbers: { rows: shuffledDigits(), cols: shuffledDigits() },
+    claims: null,
+    locked: false,
+    week: new Date().toISOString().slice(0,10)
+  });
+  await fbSet('winners', {});
+  await fbSet('score', { home:0, away:0, quarter:'Pre-game' });
+  showBanner('New week started — numbers assigned and hidden until lock.', 2500);
+};
+
+document.getElementById('lockBtn').onclick = async ()=>{
+  if(!board.numbers){
+    showBanner('Randomize numbers first.', 2000);
+    return;
+  }
+  await fbUpdate('board', { locked: !board.locked });
+};
+
+document.getElementById('clearBoardBtn').onclick = async ()=>{
+  const soldCount = Object.keys(board.claims).length;
+  const ok = await confirmModal(
+    '⚠️ Clear the entire board?',
+    `This immediately removes all ${soldCount} claimed square${soldCount===1?'':'s'} — names, reservations, and paid status — AND clears the randomized numbers (row/column headers go back to "?" and the board unlocks). Score and winners history are kept. This cannot be undone.`,
+    '⚠️ Yes, clear every square',
+    'No, cancel'
+  );
+  if(!ok) return;
+  // Second confirmation on purpose — this is destructive and irreversible.
+  const reallyOk = await confirmModal(
+    'Are you absolutely sure?',
+    'Every person\'s reserved square AND the randomized numbers will be wiped right now. This cannot be undone.',
+    '⚠️ Yes, clear it',
+    'No, go back'
+  );
+  if(!reallyOk) return;
+  await fbUpdate('board', { claims: null, numbers: null, locked: false });
+  showBanner('Board cleared — claims and numbers removed.', 2500);
+};
+
+document.getElementById('updateScoreBtn').onclick = async ()=>{
+  const home = parseInt(document.getElementById('inHome').value) || 0;
+  const away = parseInt(document.getElementById('inAway').value) || 0;
+  const quarter = document.getElementById('inQuarter').value;
+  await fbSet('score', { home, away, quarter });
+  showBanner(`Score updated — Texans ${home}, ${board.opponent} ${away}.`, 2000);
+};
+
+document.getElementById('lockWinnerBtn').onclick = async ()=>{
+  const idx = currentWinningIndex();
+  const q = document.getElementById('inQuarter').value;
+  if(idx < 0){
+    showBanner('Numbers must be assigned and locked first.', 2200);
+    return;
+  }
+  if(winners[q]){
+    const ok = await confirmModal('Overwrite winner?', `${q} already has a winner locked. Overwrite it?`);
+    if(!ok) return;
+  }
+  const name = board.claims[idx] ? board.claims[idx].name : null;
+  const amount = 500; // flat payout per quarter
+  await fbSet('winners/' + q, {
+    quarter: q,
+    index: idx,
+    name: name,
+    homeDigit: scoreState.home % 10,
+    awayDigit: scoreState.away % 10,
+    amount: Math.round(amount),
+    time: Date.now()
+  });
+  showBanner(`${q} winner: ${name ? name : 'an unclaimed square'} 🏈`, 4000);
+};
+
+document.getElementById('saveRulesBtn').onclick = async ()=>{
+  const text = document.getElementById('rulesTextarea').value;
+  await fbSet('rules', text);
+  showBanner('Rules saved.', 1500);
+};
+
+attachListeners();
+</script>
+</body>
+</html>
